@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Desafio da Memória — Química</title>
+<style>
+:root{--bg:#f4f6fb;--ink:#20243a;--purple:#5c45b8;--purple2:#7865d8;--green:#16845b;--gold:#f4c95d;--card:#fff;--muted:#657087}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+header{background:linear-gradient(120deg,#30216f,#6752c5);color:#fff;padding:24px 16px;text-align:center}
+header h1{margin:0 0 6px;font-size:clamp(1.55rem,4vw,2.4rem)} header p{margin:0;opacity:.92}
+main{max-width:1100px;margin:0 auto;padding:18px}
+.panel{background:#fff;border-radius:16px;padding:16px;box-shadow:0 4px 18px #2221;margin-bottom:16px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end}
+label{font-weight:650;font-size:.92rem;display:block;margin-bottom:6px}
+input,select,button{font:inherit}
+input,select{width:100%;padding:10px 11px;border:1px solid #c9ccda;border-radius:9px;background:#fff;color:var(--ink)}
+button{border:0;border-radius:10px;padding:11px 15px;font-weight:700;cursor:pointer}
+.primary{background:var(--purple);color:white}.secondary{background:#e9e6fb;color:#382b83}.danger{background:#fce9e9;color:#8c2929}
+button:focus-visible,.memory-card:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f4c95d;outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stat{background:#f0effb;border-radius:12px;padding:12px;text-align:center}.stat small{display:block;color:var(--muted)}.stat strong{font-size:1.35rem}
+.players{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.player{padding:12px;border:2px solid transparent;border-radius:12px;background:#f5f5fa}.player.active{border-color:var(--purple2);background:#eeebff}.player strong{display:block}
+.status{font-weight:700;min-height:1.5em;margin:12px 0 0}
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.memory-card{min-height:112px;border:2px solid #ddd8fa;background:linear-gradient(145deg,#6550c2,#3c2a8c);color:white;border-radius:14px;padding:8px;display:flex;align-items:center;justify-content:center;text-align:center;flex-direction:column;box-shadow:0 3px 0 #2d216d;transition:transform .12s}
+.memory-card:hover{transform:translateY(-2px)}.memory-card .symbol{font-size:clamp(1.4rem,3vw,2rem);font-weight:850;line-height:1.1}.memory-card .sub{font-size:.76rem;margin-top:6px;opacity:.9}
+.memory-card.revealed,.memory-card.matched{background:#fff;color:var(--ink);border-color:#c9c2f4;box-shadow:none}.memory-card.matched{background:#e4f7ed;border-color:#6bc59b;color:#14583e}.memory-card:disabled{cursor:default;opacity:1}
+.note{color:var(--muted);font-size:.9rem;line-height:1.5}.hidden{display:none!important}
+footer{text-align:center;color:var(--muted);padding:6px 12px 24px;font-size:.85rem}
+@media(max-width:620px){main{padding:12px}.stats{grid-template-columns:repeat(2,1fr)}.board{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.memory-card{min-height:100px;padding:5px}.players{gap:7px}.panel{padding:12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧪 Desafio da Memória — Química</h1>
+  <p>1º ano do Ensino Médio • Jogo em duplas • Aprender jogando</p>
+</header>
+<main>
+  <section class="panel">
+    <h2 style="margin-top:0">Prepare a partida</h2>
+    <div class="controls">
+      <div><label for="team1">Nome da dupla / Jogador 1</label><input id="team1" maxlength="24" value="Dupla Azul"></div>
+      <div><label for="team2">Nome da dupla / Jogador 2</label><input id="team2" maxlength="24" value="Dupla Verde"></div>
+      <div><label for="topic">Conteúdo</label><select id="topic"><option value="periodic">Tabela Periódica</option><option value="atoms">Estrutura atômica</option><option value="bonds">Ligações químicas</option><option value="reactions">Reações químicas</option><option value="mixed" selected>Revisão mista</option></select></div>
+      <div><label for="difficulty">Dificuldade</label><select id="difficulty"><option value="6">Fácil — 6 pares</option><option value="8" selected>Médio — 8 pares</option><option value="10">Difícil — 10 pares</option></select></div>
+      <div><button class="primary" id="start" style="width:100%">Começar / nova partida</button></div>
+    </div>
+    <p class="note">Como jogar: os jogadores se alternam a cada tentativa. Cada tentativa é virar duas cartas. Se formar um par correto, a dupla/jogador ganha 1 ponto e joga novamente; se errar, a vez passa ao adversário. Vence quem encontrar mais pares. Para uso em duplas de alunos, cada equipe pode conversar antes de escolher as cartas.</p>
+  </section>
+  <section class="panel">
+    <div class="stats">
+      <div class="stat"><small>Pares encontrados</small><strong id="found">0 / 8</strong></div>
+      <div class="stat"><small>Tentativas</small><strong id="moves">0</strong></div>
+      <div class="stat"><small>Tempo</small><strong id="time">00:00</strong></div>
+      <div class="stat"><small>Vez de</small><strong id="turnLabel">Dupla Azul</strong></div>
+    </div>
+    <div class="players">
+      <div class="player active" id="player0"><strong id="name0">Dupla Azul</strong><span>Pontos: <b id="score0">0</b></span></div>
+      <div class="player" id="player1"><strong id="name1">Dupla Verde</strong><span>Pontos: <b id="score1">0</b></span></div>
+    </div>
+    <p class="status" id="status" aria-live="polite">Clique em “Começar / nova partida” para embaralhar as cartas.</p>
+  </section>
+  <section class="panel">
+    <div id="board" class="board" aria-label="Tabuleiro do jogo da memória"></div>
+    <div id="result" class="hidden" style="margin-top:16px;padding:15px;border-radius:12px;background:#e4f7ed">
+      <h2 style="margin:0 0 6px">🏆 Fim de jogo!</h2><p id="winner" style="margin:0"></p>
+      <button class="primary" id="playAgain" style="margin-top:12px">Jogar novamente</button>
+    </div>
+  </section>
+  <section class="panel">
+    <h2 style="margin-top:0">Aprendizagem em equipe</h2>
+    <p class="note">Quando encontrarem um par, expliquem em voz alta por que as cartas combinam. O professor pode pedir que cada equipe justifique uma associação antes de validar o ponto. A pontuação é local neste computador e não é enviada nem salva em um servidor.</p>
+  </section>
+</main>
+<footer>Jogo educativo offline • Funciona em navegadores modernos no Linux • Sem cadastro e sem coleta de dados</footer>
+<script>
+const decks = {
+ periodic: [
+  ["H","Hidrogênio"],["O","Oxigênio"],["Na","Sódio"],["Cl","Cloro"],["Fe","Ferro"],
+  ["C","Carbono"],["He","Hélio"],["Ca","Cálcio"],["K","Potássio"],["N","Nitrogênio"]
+ ],
+ atoms: [
+  ["Próton","Carga positiva (+)"],["Elétron","Carga negativa (−)"],["Nêutron","Carga elétrica nula"],
+  ["Núcleo","Região central do átomo"],["Número atômico","Quantidade de prótons"],["Massa","Prótons + nêutrons"],
+  ["Eletrosfera","Região dos elétrons"],["Íon","Átomo ou grupo com carga elétrica"],["Isótopos","Mesmo número de prótons"],["Átomo neutro","Prótons = elétrons"]
+ ],
+ bonds: [
+  ["Iônica","Transferência de elétrons e atração entre íons"],["Covalente","Compartilhamento de elétrons"],
+  ["Metálica","Cátions metálicos e elétrons deslocalizados"],["NaCl","Composto predominantemente iônico"],
+  ["H₂O","Molécula com ligações covalentes"],["Metal","Conduz corrente no estado sólido"],
+  ["Ligação","Interação que mantém átomos unidos"],["Octeto","Tendência a completar 8 elétrons na valência"],
+  ["Cátion","Íon de carga positiva"],["Ânion","Íon de carga negativa"]
+ ],
+ reactions: [
+  ["Síntese","Duas ou mais substâncias formam um produto"],["Análise","Uma substância origina duas ou mais"],
+  ["Simples troca","Uma substância simples desloca um elemento"],["Dupla troca","Há troca de íons entre compostos"],
+  ["Combustão","Reação com O₂ que libera energia"],["2H₂ + O₂","Forma 2H₂O (síntese)"],
+  ["CaCO₃","Pode se decompor em CaO + CO₂"],["Zn + 2HCl","Forma ZnCl₂ + H₂ (simples troca)"],
+  ["AgNO₃ + NaCl","Forma AgCl + NaNO₃ (dupla troca)"],["Combustível","Substância que reage na combustão"]
+ ]
+};
+const mixed = [
+ ["Na","Sódio"],["O","Oxigênio"],["Próton","Carga positiva (+)"],["Elétron","Carga negativa (−)"],
+ ["Iônica","Transferência de elétrons e atração entre íons"],["Covalente","Compartilhamento de elétrons"],
+ ["Síntese","Duas ou mais substâncias formam um produto"],["Análise","Uma substância origina duas ou mais"],
+ ["Nêutron","Carga elétrica nula"],["Cl","Cloro"]
+];
+const $=id=>document.getElementById(id);
+let cards=[], selected=[], matched=new Set(), scores=[0,0], player=0, moves=0, seconds=0, clock=null, running=false, lock=false, totalPairs=8;
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function fmtTime(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function setStatus(t){$("status").textContent=t}
+function activeName(){return player===0?($("team1").value.trim()||"Jogador 1"):($("team2").value.trim()||"Jogador 2")}
+function update(){
+ $("found").textContent=(matched.size/2)+" / "+totalPairs;$("moves").textContent=moves;$("time").textContent=fmtTime(seconds);
+ $("turnLabel").textContent=activeName();
+ for(let i=0;i<2;i++){const n=i===0?($("team1").value.trim()||"Jogador 1"):($("team2").value.trim()||"Jogador 2");$("name"+i).textContent=n;$("score"+i).textContent=scores[i];$("player"+i).classList.toggle("active",player===i)}
+}
+function makeCard(card,index){
+ const b=document.createElement("button");b.className="memory-card";b.type="button";b.setAttribute("aria-label","Carta virada para baixo");b.innerHTML='<span class="symbol">?</span><span class="sub">Química</span>';
+ b.addEventListener("click",()=>flip(index,b));return b;
+}
+function render(){
+ const board=$("board");board.innerHTML="";
+ cards.forEach((c,i)=>{const b=makeCard(c,i);if(matched.has(i))showCard(b,c,true);board.appendChild(b)});
+}
+function showCard(b,c,isMatched=false){b.classList.add(isMatched?"matched":"revealed");b.innerHTML='<span class="symbol"></span><span class="sub"></span>';b.querySelector(".symbol").textContent=c.label;b.querySelector(".sub").textContent=c.kind;b.setAttribute("aria-label",c.label+" — "+c.kind);if(isMatched)b.disabled=true}
+function flip(index,b){
+ if(!running||lock||matched.has(index)||selected.some(x=>x.index===index))return;
+ if(!clock)clock=setInterval(()=>{seconds++;$("time").textContent=fmtTime(seconds)},1000);
+ showCard(b,cards[index]);selected.push({index,button:b});if(selected.length<2)return;
+ moves++;const [a,c]=selected;const isPair=a.index!==c.index&&cards[a.index].pairId===cards[c.index].pairId;
+ if(isPair){
+   matched.add(a.index);matched.add(c.index);scores[player]++;a.button.classList.add("matched");c.button.classList.add("matched");a.button.disabled=true;c.button.disabled=true;
+   setStatus("Par encontrado! "+activeName()+" ganha 1 ponto e joga novamente. Explique a relação entre as cartas.");
+   selected=[];update();
+   if(matched.size===cards.length)finish();
+ }else{
+   lock=true;setStatus("Não formou par. A vez passa para "+(player===0?($("team2").value.trim()||"Jogador 2"):($("team1").value.trim()||"Jogador 1"))+".");
+   setTimeout(()=>{for(const x of selected){x.button.classList.remove("revealed");x.button.innerHTML='<span class="symbol">?</span><span class="sub">Química</span>';x.button.setAttribute("aria-label","Carta virada para baixo")}selected=[];player=1-player;lock=false;update()},950);
+ }
+ update();
+}
+function finish(){
+ running=false;clearInterval(clock);clock=null;$("result").classList.remove("hidden");
+ let msg;if(scores[0]>scores[1])msg=($("team1").value.trim()||"Jogador 1")+" venceu com "+scores[0]+" pontos!";else if(scores[1]>scores[0])msg=($("team2").value.trim()||"Jogador 2")+" venceu com "+scores[1]+" pontos!";else msg="Empate! As duas equipes terminaram com "+scores[0]+" pontos.";
+ $("winner").textContent=msg+" Foram "+moves+" tentativas em "+fmtTime(seconds)+".";
+ setStatus("Partida encerrada. Conversem sobre os conceitos que apareceram no jogo.");
+}
+function startGame(){
+ clearInterval(clock);clock=null;seconds=0;moves=0;scores=[0,0];player=0;selected=[];matched=new Set();lock=false;running=true;$("result").classList.add("hidden");
+ totalPairs=Number($("difficulty").value);
+ const topic=$("topic").value;let deck=topic==="mixed"?mixed:decks[topic];
+ const chosen=shuffle([...deck]).slice(0,totalPairs);
+ cards=shuffle(chosen.flatMap((p,i)=>[
+  {pairId:i,label:p[0],kind:"Conceito / símbolo"},
+  {pairId:i,label:p[1],kind:"Definição / associação"}
+ ]));
+ render();update();setStatus("Partida iniciada! Começa "+activeName()+". Vire duas cartas.");
+}
+$("start").addEventListener("click",startGame);$("playAgain").addEventListener("click",startGame);
+$("team1").addEventListener("input",update);$("team2").addEventListener("input",update);
+update();
+</script>
+</body>
+</html>
